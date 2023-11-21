@@ -1,8 +1,8 @@
 # PR Type
-- [] Features
-- [] Bug files
-- [] Documentation
-- [] ETC
+- [ ] Features
+- [ ] Bug files
+- [ ] Documentation
+- [ ] ETC
 
 # Description
 - dd
