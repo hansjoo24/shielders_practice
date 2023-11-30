@@ -150,7 +150,7 @@ def fetch_all_unread_emails(email_username, email_password):
             # 엑셀파일 저장
             current_time = datetime.now().strftime("%Y%m%d")
             file_name = f"spam_{current_time}.xlsx"
-            df.to_excel(file_name, index=False)
+            df.to_excel("result\\"+file_name, index=False)
             print(f"광고 이메일 정보가 '{file_name}'로 저장되었습니다.")
 
         # 연결 종료
@@ -162,8 +162,8 @@ def fetch_all_unread_emails(email_username, email_password):
        
 
 # 이메일 계정 정보 입력
-email_username = "hansjoo25"
-email_password = "gkstmdwndltlqdh"
+email_username = "id"
+email_password = "password"
 
 
 # 이메일 목록 가져오기
