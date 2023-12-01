@@ -17,6 +17,9 @@ from email.mime.application import MIMEApplication
 from dotenv import load_dotenv, find_dotenv
 import os
 
+from domain_check import domain_check
+from word_check import ad_word_included
+
 # .env 파일에서 환경 변수 로드
 dotenv_path = find_dotenv(filename=".env", raise_error_if_not_found=True)
 load_dotenv(dotenv_path)
@@ -142,25 +145,6 @@ def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
         print(f"메일 전송 실패 : {e}")
 
 
-# 허용된 이메일 도메인인지 확인하는 함수
-def is_email_allowed(email_address, allowed_domains):
-    # 이메일 주소의 도메인 부분 추출
-    _, domain = email_address.lower().split('@', 1) if '@' in email_address else (None, None)
-
-
-    # 마지막 '>' 기호 제거
-    domain = domain.rstrip('>')
-   
-    # 디버깅
-    print(f"추출한 도메인 : {domain}")
-
-
-    # 추출한 도메인이 허용 목록에 있는지 확인
-    allowed = domain in allowed_domains
-    # 허용된 도메인 출력
-    print(f"Domain: {domain}, Allowed: {allowed}\n")
-    return allowed
-
 
 # 안 읽은 모든 메일 가져오는 함수
 def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
@@ -200,16 +184,10 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                 body = get_email_body(msg)
                
                 # 도메인이 허용되는지 확인
-                if is_email_allowed(sender, allowed_domains):
+                if domain_check(sender, allowed_domains):
+
                     # 허용 도메인이면 '광고' 단어 체크
-                    if '광고' in body:
-                        # 스팸 메일인 경우
-                        print(f"보낸 사람: {sender}")
-                        print(f"제목: {subject}")
-                        print(f"날짜: {date}")
-                        print(f"내용:\n{body}")
-
-
+                    if(ad_word_included(body)):
                         all_emails_data['Sender'].append(sender)
                         all_emails_data['Subject'].append(subject)
                         all_emails_data['Date'].append(date)
