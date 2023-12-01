@@ -11,6 +11,6 @@ def extend_word_included(msg):
             malicious_extend = ['xlsx','txt','exe'] #여기에 스팸으로 분류하고 싶은확장자를 추가
             for word in malicious_extend:
                 if filename.endswith(word):
-                    return True, f"금지된 확장자 - .{word}"
+                    return True, f"- 금지된 확장자 포함 : .{word}"
             else:
                 return False
