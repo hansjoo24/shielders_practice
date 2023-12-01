@@ -19,6 +19,7 @@ import os
 
 from domain_check import domain_check
 from word_check import ad_word_included
+from sender_check import is_banned_sender
 
 # .env 파일에서 환경 변수 로드
 dotenv_path = find_dotenv(filename=".env", raise_error_if_not_found=True)
@@ -149,8 +150,7 @@ def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
 
 # 안 읽은 모든 메일 가져오는 함수
 def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
-    spam_check_list = []
-    cause_list = []
+    
     file_name = None
     try:
         # IMAP 서버에 연결
@@ -176,6 +176,7 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
             all_emails_data = {'Sender': [], 'Subject': [], 'Date': [], 'Body': []}
            
             for num in messages[0].split():
+                
                 _, msg_data = mail.fetch(num, "(RFC822)")
                 msg = email.message_from_bytes(msg_data[0][1])
 
@@ -185,17 +186,26 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                 subject = decode_email_header(msg.get("Subject"))
                 date = msg.get("Date")
                 body = get_email_body(msg)
+
+                spam_flag = False
+                cause_list = []
                
                 # 도메인이 허용되는지 확인
                 if domain_check(sender, allowed_domains):
 
                     # 스팸 단어 체크 기준 
-                    spam_check_list.append(ad_word_included(body)[0])
-                    cause_list.append(ad_word_included(body)[1])
+                    if ad_word_included(body): #광고 단어가 들어가 있으면 체크
+                        cause_list.append(ad_word_included(body)[1])
+                        spam_flag = True
+                    
+                    if is_banned_sender(sender):#보낸 사람이 금지된 사용자이면 체크
+                        cause_list.append(is_banned_sender(sender)[1])
+                        spam_flag = True
+                    
                     
 
                     # 스팸 단어 체크 기준 추가 
-                    if True in spam_check_list:
+                    if spam_flag==True:
 
                         all_emails_data['Sender'].append(sender)
                         all_emails_data['Subject'].append(subject)
@@ -204,7 +214,10 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
 
 
                         print("해당 광고 내용은 스팸일 수 있습니다")
-                        print("스팸 사유 : ",cause_list)
+                        print("스팸 사유 : ")
+                        for cause in cause_list:
+                            print(cause)
+                            
                         print("--------")
                     else:
                         # 정상 메일인 경우
