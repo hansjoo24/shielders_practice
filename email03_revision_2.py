@@ -20,6 +20,7 @@ import os
 from domain_check import domain_check
 from word_check import ad_word_included
 from sender_check import is_banned_sender
+from extend_check import extend_word_included
 
 # .env 파일에서 환경 변수 로드
 dotenv_path = find_dotenv(filename=".env", raise_error_if_not_found=True)
@@ -201,6 +202,10 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                     if is_banned_sender(sender):#보낸 사람이 금지된 사용자이면 체크
                         cause_list.append(is_banned_sender(sender)[1])
                         spam_flag = True
+
+                    if extend_word_included(msg):
+                        cause_list.append(extend_word_included(msg)[1])
+                        spam_flag = True
                     
                     
 
@@ -217,7 +222,7 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                         print("스팸 사유 : ")
                         for cause in cause_list:
                             print(cause)
-                            
+
                         print("--------")
                     else:
                         # 정상 메일인 경우
