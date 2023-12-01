@@ -174,7 +174,7 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
         # 모든 안 읽은 이메일 체크
         status, messages = mail.search(None, "UNSEEN")
         if status == "OK" and any(messages):
-            all_emails_data = {'Sender': [], 'Subject': [], 'Date': [], 'Body': []}
+            all_emails_data = {'Sender': [], 'Subject': [], 'Date': [], 'Body': [], 'Cause':[]}
            
             for num in messages[0].split():
                 
@@ -203,8 +203,8 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                         cause_list.append(is_banned_sender(sender)[1])
                         spam_flag = True
 
-                    if extend_word_included(msg):
-                        cause_list.append(extend_word_included(msg)[1])
+                    if extend_word_included(msg): #확장자가 지정된 확장자이면 체크
+                        cause_list.append(extend_word_included(msg)[1]) 
                         spam_flag = True
                     
                     
@@ -216,6 +216,7 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                         all_emails_data['Subject'].append(subject)
                         all_emails_data['Date'].append(date)
                         all_emails_data['Body'].append(body)
+                        all_emails_data['Cause'].append(' / '.join(cause_list))
 
 
                         print("해당 광고 내용은 스팸일 수 있습니다")
@@ -267,7 +268,7 @@ now = datetime.now().strftime("%Y-%m-%d")
 
 
 # 메일 목록 가져오기
-schedule.every(3).seconds.do(lambda: fetch_all_unread_emails(SECRET_ID, SECRET_PASS))
+schedule.every(5).seconds.do(lambda: fetch_all_unread_emails(SECRET_ID, SECRET_PASS))
 while True:
     schedule.run_pending()
     time.sleep(1)
