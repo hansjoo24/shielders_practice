@@ -142,7 +142,7 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
         allowed_domains_df = pd.read_excel(os.path.join("resorces", 'allowedEmail.xlsx'), engine='openpyxl')
         allowed_domains = allowed_domains_df['Domain'].str.lower().tolist()
        
-        # 디버깅
+        # allowed_domains 목록 확인
         print(f"엑셀 파일 내의 allowed_domains 목록 : {allowed_domains}")
         print("--------")
 
@@ -162,10 +162,13 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                 date = msg.get("Date")
                 body = get_email_body(msg)
 
+                # 스팸 flag를 False로 설정
                 spam_flag = False
+                
+                # 스팸 사유 리스트 생성
                 cause_list = []
                 
-                # 스팸 단어 체크 기준 
+                # 스팸 메일 체크 기준
                 if ad_word_included(body): #광고 단어가 들어가 있으면 체크
                     cause_list.append(ad_word_included(body)[1])
                     spam_flag = True
@@ -182,20 +185,22 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                     cause_list.append(extend_word_included(msg)[1]) 
                     spam_flag = True
                 
-                # 스팸 단어 체크 기준 추가
+                # 스팸 메일 체크 기준 추가
                 # 스팸 flag가 True이면 메일로 전송할 엑셀 파일에 작성
                 if spam_flag:
                     all_emails_data['Sender'].append(sender)
                     all_emails_data['Subject'].append(subject)
                     all_emails_data['Date'].append(date)
                     all_emails_data['Body'].append(body)
-                
-                    print("해당 광고 내용은 스팸일 수 있습니다")
-                    print("스팸 사유 : ")
-
+                    
+                    # cause_list의 각 원소들을 개행 문자(\n)로 구분하여 하나의 문자열로 결합
                     cause_string = "\n".join(cause_list)
+                    
+                    # 엑셀 파일의 'Reason for spam' 열에 추가
                     all_emails_data['Reason for spam'].append(cause_string)
                     
+                    print("해당 광고 내용은 스팸일 수 있습니다")
+                    print("스팸 사유 : ")
                     print(cause_string)
                     print("--------")
                 else:
