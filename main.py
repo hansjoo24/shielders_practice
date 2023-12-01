@@ -23,13 +23,11 @@ from extend_check import extend_word_included
 dotenv_path = find_dotenv(filename=".env", raise_error_if_not_found=True)
 load_dotenv(dotenv_path)
 
-
 # 환경 변수 설정
 SECRET_ID = os.getenv("SECRET_ID")
 SECRET_PASS = os.getenv("SECRET_PASS")
 MY_EMAIL = os.getenv("MY_EMAIL")
 YOUR_EMAIL = os.getenv("YOUR_EMAIL")
-
 
 # 이메일 헤더 디코딩 함수
 def decode_email_header(header_value):
@@ -44,17 +42,13 @@ def decode_email_header(header_value):
         else:
             decoded_part = part
 
-
         decoded_parts.append(decoded_part)
 
-
     return ' '.join(decoded_parts)
-
 
 # 이메일 본문 가져오는 함수
 def get_email_body(msg):
     body = ""
-
 
     # 멀티파트인 경우
     if msg.is_multipart():
@@ -67,11 +61,8 @@ def get_email_body(msg):
         # 멀티파트가 아닌 경우 본문 직접 가져오기
         body = msg.get_payload(decode=True).decode("utf-8", errors="ignore")
 
-
     return body
 
-
-    
 #스팸 정보 메일 전송 함수
 def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
     try:
@@ -80,19 +71,15 @@ def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
         smtp.ehlo()
         smtp.starttls()
 
-
         # 로그인
         smtp.login(SECRET_ID, SECRET_PASS)
-
 
         # 메일 구성
         msg = MIMEMultipart()
 
-
         msg['Subject'] = f"{now}_스팸 메일 보고서"
         msg['From'] = MY_EMAIL
         msg['To'] = YOUR_EMAIL
-
 
         text = f"""
         <html>
@@ -106,14 +93,11 @@ def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
         </html>
         """
 
-
         contentPart = MIMEText(text, "html")
         msg.attach(contentPart)
 
-
         # 엑셀 파일 열기
         workbook = openpyxl.load_workbook(file_name)
-
 
         # 엑셀 셀 크기 조정
         for sheet in workbook:
@@ -124,7 +108,6 @@ def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
         for column, width in zip(['A', 'B', 'C', 'D','E'], [30, 30, 30, 40, 40]):
             sheet.column_dimensions[column].width = width
 
-
         # 엑셀 파일 다시 저장
         workbook.save(file_name)
        
@@ -134,16 +117,13 @@ def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
             part['Content-Disposition'] = f'attachment; filename="{file_name}"'
             msg.attach(part)
 
-
         # 메일 전송
         smtp.sendmail(MY_EMAIL, YOUR_EMAIL, msg.as_string())
         smtp.quit()
         print(f"'{file_name}' 성공적으로 전송.")
 
-
     except Exception as e:
         print(f"메일 전송 실패 : {e}")
-
 
 
 # 안 읽은 모든 메일 가져오는 함수
@@ -153,7 +133,6 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
     try:
         # IMAP 서버에 연결
         mail = imaplib.IMAP4_SSL("imap.naver.com")
-
 
         # IMAP 서버에 연결
         mail.login(SECRET_ID, SECRET_PASS)
@@ -167,7 +146,6 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
         print(f"엑셀 파일 내의 allowed_domains 목록 : {allowed_domains}")
         print("--------")
 
-
         # 모든 안 읽은 이메일 체크
         status, messages = mail.search(None, "UNSEEN")
         if status == "OK" and any(messages):
@@ -178,7 +156,6 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                 _, msg_data = mail.fetch(num, "(RFC822)")
                 msg = email.message_from_bytes(msg_data[0][1])
 
-
                 # 이메일 정보 가져오기
                 sender = decode_email_header(msg.get("From"))
                 subject = decode_email_header(msg.get("Subject"))
@@ -188,7 +165,6 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                 spam_flag = False
                 cause_list = []
                 
-
                 # 스팸 단어 체크 기준 
                 if ad_word_included(body): #광고 단어가 들어가 있으면 체크
                     cause_list.append(ad_word_included(body)[1])
@@ -206,8 +182,6 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                     cause_list.append(extend_word_included(msg)[1]) 
                     spam_flag = True
                 
-
-
                 # 스팸 단어 체크 기준 추가
                 # 스팸 flag가 True이면 메일로 전송할 엑셀 파일에 작성
                 if spam_flag:
@@ -229,36 +203,27 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                     print("정상적인 메일입니다.")
                     print("--------")
 
-
-
-
             # 수집된 메일 정보 저장
             df = pd.DataFrame(all_emails_data)
-
 
             # 엑셀파일 저장
             file_name = f"{now}_spam_mail_report.xlsx"
             df.to_excel(file_name, index=False)
             print(f"스팸 메일 정보가 '{file_name}'로 저장되었습니다.")
 
-
         else:
             # 안 읽은 메일이 없는 경우
             print("안 읽은 메일이 없습니다.")
 
-
         # 연결 종료
         mail.logout()
-
 
     except Exception as e:
         print(f"오류 발생: {e}")
 
-
     # Excel 파일이 생성된 경우 스팸 정보 메일 전송
     if file_name is not None:
         mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name)
-
 
 # 현재 날짜 및 시간 얻기
 now = datetime.now().strftime("%Y-%m-%d")

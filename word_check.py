@@ -1,3 +1,4 @@
+# 스팸 단어 체크
 def ad_word_included(body):
     malicious_words = ["광고"]
 

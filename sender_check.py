@@ -1,3 +1,4 @@
+# 금지된 사용자 확인
 def is_banned_sender(sender):
     banned_senders = ["hansjoo25@naver.com","ksh_0403@naver.com"]
     
