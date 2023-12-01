@@ -72,6 +72,7 @@ def get_email_body(msg):
     return body
 
 
+    
 #스팸 정보 메일 전송 함수
 def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
     try:
@@ -148,6 +149,8 @@ def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
 
 # 안 읽은 모든 메일 가져오는 함수
 def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
+    spam_check_list = []
+    cause_list = []
     file_name = None
     try:
         # IMAP 서버에 연결
@@ -186,15 +189,22 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
                 # 도메인이 허용되는지 확인
                 if domain_check(sender, allowed_domains):
 
-                    # 허용 도메인이면 '광고' 단어 체크
-                    if(ad_word_included(body)):
+                    # 스팸 단어 체크 기준 
+                    spam_check_list.append(ad_word_included(body)[0])
+                    cause_list.append(ad_word_included(body)[1])
+                    
+
+                    # 스팸 단어 체크 기준 추가 
+                    if True in spam_check_list:
+
                         all_emails_data['Sender'].append(sender)
                         all_emails_data['Subject'].append(subject)
                         all_emails_data['Date'].append(date)
                         all_emails_data['Body'].append(body)
 
 
-                        print("메일 내용에 '광고' 단어가 포함되어 있어 스팸일 수 있습니다.")
+                        print("해당 광고 내용은 스팸일 수 있습니다")
+                        print("스팸 사유 : ",cause_list)
                         print("--------")
                     else:
                         # 정상 메일인 경우

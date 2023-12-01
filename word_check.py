@@ -3,7 +3,7 @@ def ad_word_included(body):
 
     for word in malicious_words:
         if word in body:
-            return True
+            return True,f"{word} 단어 포함"
         
     else:
         return False
