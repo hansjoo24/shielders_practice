@@ -1,6 +1,3 @@
-#김승현님 + 이지원님 코드 합한 결과
-#3초에 1번씩 실행되도록 수정 
-
 import imaplib
 import email
 from email.header import decode_header
@@ -124,7 +121,7 @@ def mail_sender(SECRET_ID, SECRET_PASS, YOUR_EMAIL, file_name):
                 for cell in row:
                     cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
                
-        for column, width in zip(['A', 'B', 'C', 'D'], [30, 20, 30, 10]):
+        for column, width in zip(['A', 'B', 'C', 'D','E'], [30, 30, 30, 40, 40]):
             sheet.column_dimensions[column].width = width
 
 
@@ -174,7 +171,7 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
         # 모든 안 읽은 이메일 체크
         status, messages = mail.search(None, "UNSEEN")
         if status == "OK" and any(messages):
-            all_emails_data = {'Sender': [], 'Subject': [], 'Date': [], 'Body': [], 'Cause':[]}
+            all_emails_data = {'Sender': [], 'Subject': [], 'Date': [], 'Body': [], 'Reason for spam':[]}
            
             for num in messages[0].split():
                 
@@ -190,49 +187,49 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
 
                 spam_flag = False
                 cause_list = []
-               
-                # 도메인이 허용되는지 확인
-                if domain_check(sender, allowed_domains):
+                
 
-                    # 스팸 단어 체크 기준 
-                    if ad_word_included(body): #광고 단어가 들어가 있으면 체크
-                        cause_list.append(ad_word_included(body)[1])
-                        spam_flag = True
+                # 스팸 단어 체크 기준 
+                if ad_word_included(body): #광고 단어가 들어가 있으면 체크
+                    cause_list.append(ad_word_included(body)[1])
+                    spam_flag = True
                     
-                    if is_banned_sender(sender):#보낸 사람이 금지된 사용자이면 체크
-                        cause_list.append(is_banned_sender(sender)[1])
-                        spam_flag = True
-
-                    if extend_word_included(msg): #확장자가 지정된 확장자이면 체크
-                        cause_list.append(extend_word_included(msg)[1]) 
-                        spam_flag = True
+                if is_banned_sender(sender): #보낸 사람이 금지된 사용자이면 체크
+                    cause_list.append(is_banned_sender(sender)[1])
+                    spam_flag = True
+                        
+                if not domain_check(sender, allowed_domains): #도메인이 허용되지 않았으면 체크
+                    cause_list.append("- 허용되지 않은 도메인")
+                    spam_flag = True
                     
+                if extend_word_included(msg): #확장자가 지정된 확장자이면 체크
+                    cause_list.append(extend_word_included(msg)[1]) 
+                    spam_flag = True
+                
+
+
+                # 스팸 단어 체크 기준 추가
+                # 스팸 flag가 True이면 메일로 전송할 엑셀 파일에 작성
+                if spam_flag:
+                    all_emails_data['Sender'].append(sender)
+                    all_emails_data['Subject'].append(subject)
+                    all_emails_data['Date'].append(date)
+                    all_emails_data['Body'].append(body)
+                
+                    print("해당 광고 내용은 스팸일 수 있습니다")
+                    print("스팸 사유 : ")
+
+                    cause_string = "\n".join(cause_list)
+                    all_emails_data['Reason for spam'].append(cause_string)
                     
-
-                    # 스팸 단어 체크 기준 추가 
-                    if spam_flag==True:
-
-                        all_emails_data['Sender'].append(sender)
-                        all_emails_data['Subject'].append(subject)
-                        all_emails_data['Date'].append(date)
-                        all_emails_data['Body'].append(body)
-                        all_emails_data['Cause'].append(' / '.join(cause_list))
-
-
-                        print("해당 광고 내용은 스팸일 수 있습니다")
-                        print("스팸 사유 : ")
-                        for cause in cause_list:
-                            print(cause)
-
-                        print("--------")
-                    else:
-                        # 정상 메일인 경우
-                        print("정상적인 메일입니다.")
-                        print("--------")
-                else:
-                    # 비허용 도메인에 대한 경고 출력
-                    print(f"경고: 허용되지 않은 이메일 도메인입니다. - {sender}")
+                    print(cause_string)
                     print("--------")
+                else:
+                    # 스팸 flag가 Flase인 경우 작성하지 않음
+                    print("정상적인 메일입니다.")
+                    print("--------")
+
+
 
 
             # 수집된 메일 정보 저장
@@ -266,9 +263,19 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
 # 현재 날짜 및 시간 얻기
 now = datetime.now().strftime("%Y-%m-%d")
 
-
 # 메일 목록 가져오기
-schedule.every(5).seconds.do(lambda: fetch_all_unread_emails(SECRET_ID, SECRET_PASS))
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+fetch_all_unread_emails(SECRET_ID, SECRET_PASS)
+
+# 매일 오후 2시에 실행하는 함수
+def job():
+    print("스크립트가 매일 오후 2시에 실행됩니다.")
+    fetch_all_unread_emails(SECRET_ID, SECRET_PASS)
+
+# 스케줄 설정
+schedule.every().day.at("14:00").do(job)
+
+if __name__ == "__main__":
+    # 무한 루프로 스케줄 유지
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
