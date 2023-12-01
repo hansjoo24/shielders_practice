@@ -267,9 +267,19 @@ def fetch_all_unread_emails(SECRET_ID, SECRET_PASS):
 # 현재 날짜 및 시간 얻기
 now = datetime.now().strftime("%Y-%m-%d")
 
-
 # 메일 목록 가져오기
-schedule.every(3).seconds.do(lambda: fetch_all_unread_emails(SECRET_ID, SECRET_PASS))
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+fetch_all_unread_emails(SECRET_ID, SECRET_PASS)
+
+# 매일 오후 2시에 실행하는 함수
+def job():
+    print("스크립트가 매일 오후 2시에 실행됩니다.")
+    fetch_all_unread_emails(SECRET_ID, SECRET_PASS)
+
+# 스케줄 설정
+schedule.every().day.at("14:00").do(job)
+
+if __name__ == "__main__":
+    # 무한 루프로 스케줄 유지
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
